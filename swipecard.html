@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Swipe Card Component Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+  <div id="root" class="w-full max-w-md"></div>
+
+  <script type="text/babel">
+    function SwipeCard() {
+      const [done, setDone] = React.useState(false);
+      const [choice, setChoice] = React.useState("");
+
+      function pick(value) {
+        setChoice(value);
+        setDone(true);
+      }
+
+      return (
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-md p-5">
+          <h2 className="text-lg font-semibold">SwipeCard (Demo)</h2>
+          <p className="text-sm text-slate-600 mt-1">Tinder-style response for a yes/no price check.</p>
+
+          <div className="mt-4 rounded-xl border p-4">
+            <img
+              src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=700&q=80"
+              alt="Running Shoes"
+              className="h-48 w-full rounded-lg object-cover"
+            />
+            <p className="mt-3 font-medium">Is the price reasonable?</p>
+            {!done ? (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button onClick={() => pick("NO")} className="rounded-lg border border-rose-200 bg-rose-50 py-2 text-rose-700 font-medium">← NOPE</button>
+                <button onClick={() => pick("YES")} className="rounded-lg border border-emerald-200 bg-emerald-50 py-2 text-emerald-700 font-medium">LIKE →</button>
+              </div>
+            ) : (
+              <div className="mt-3 rounded-lg bg-slate-900 text-white text-sm px-3 py-2">Submitted: {choice}</div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<SwipeCard />);
+  </script>
+</body>
+</html>
