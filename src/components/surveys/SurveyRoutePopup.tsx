@@ -24,6 +24,14 @@ type EventConfig = {
   mode: "floating" | "center";
 };
 
+type DebugState = {
+  route: string;
+  eventName: EventConfig["eventName"] | "none";
+  surveyType: string | null;
+  surveyId: number | null;
+  status: "idle" | "loading" | "selected" | "none" | "error";
+};
+
 function mapPathToEvent(pathname: string): EventConfig | null {
   if (pathname === "/" || pathname === "/products" || pathname.startsWith("/product/")) {
     return { eventName: "product_view", mode: "floating" };
@@ -109,6 +117,13 @@ export default function SurveyRoutePopup() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [backendSurvey, setBackendSurvey] = useState<TriggeredSurveyPayload | null>(null);
+  const [debugState, setDebugState] = useState<DebugState>({
+    route: "/",
+    eventName: "none",
+    surveyType: null,
+    surveyId: null,
+    status: "idle",
+  });
 
   const eventConfig = useMemo(() => mapPathToEvent(pathname), [pathname]);
   const surveyKind = useMemo(
@@ -121,6 +136,7 @@ export default function SurveyRoutePopup() {
   );
 
   const storageKey = `survey-dismissed:${pathname}:${backendSurvey?.id ?? "none"}`;
+  const showDebugBadge = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_SURVEY_DEBUG === "1";
 
   useEffect(() => {
     setVisible(false);
@@ -134,6 +150,14 @@ export default function SurveyRoutePopup() {
 
     const loadSurvey = async () => {
       try {
+        setDebugState({
+          route: pathname,
+          eventName: eventConfig.eventName,
+          surveyType: null,
+          surveyId: null,
+          status: "loading",
+        });
+
         const userIdentifier = getOrCreateUserIdentifier();
         const survey = await triggerSurveyEvent({
           eventName: eventConfig.eventName,
@@ -141,7 +165,18 @@ export default function SurveyRoutePopup() {
           userIdentifier,
         });
 
-        if (!active || !survey) {
+        if (!active) {
+          return;
+        }
+
+        if (!survey) {
+          setDebugState({
+            route: pathname,
+            eventName: eventConfig.eventName,
+            surveyType: null,
+            surveyId: null,
+            status: "none",
+          });
           return;
         }
 
@@ -151,6 +186,13 @@ export default function SurveyRoutePopup() {
         }
 
         setBackendSurvey(survey);
+        setDebugState({
+          route: pathname,
+          eventName: eventConfig.eventName,
+          surveyType: survey.type,
+          surveyId: survey.id,
+          status: "selected",
+        });
         const delayMs = Math.max(300, 1000 - survey.priority * 120);
         setTimeout(() => {
           if (active) {
@@ -158,6 +200,15 @@ export default function SurveyRoutePopup() {
           }
         }, delayMs);
       } catch {
+        if (active) {
+          setDebugState({
+            route: pathname,
+            eventName: eventConfig.eventName,
+            surveyType: null,
+            surveyId: null,
+            status: "error",
+          });
+        }
         // Keep UI stable if backend is unavailable.
       }
     };
@@ -301,33 +352,73 @@ export default function SurveyRoutePopup() {
     }
   };
 
+  const renderDebugBadge = () => {
+    if (!showDebugBadge) {
+      return null;
+    }
+
+    return (
+      <div className="fixed bottom-3 left-3 z-[70] rounded-lg border border-zinc-200 bg-white/95 px-3 py-2 text-[11px] text-zinc-700 shadow-lg backdrop-blur">
+        <div className="font-semibold text-zinc-900">Survey Debug</div>
+        <div>route: {debugState.route}</div>
+        <div>event: {debugState.eventName}</div>
+        <div>status: {debugState.status}</div>
+        <div>type: {debugState.surveyType ?? "-"}</div>
+        <div>id: {debugState.surveyId ?? "-"}</div>
+      </div>
+    );
+  };
+
   if (!eventConfig || !backendSurvey) {
-    return null;
+    return renderDebugBadge();
   }
 
   if (surveyKind === "micro") {
-    return visible ? renderSurvey() : null;
+    return (
+      <>
+        {visible ? renderSurvey() : null}
+        {renderDebugBadge()}
+      </>
+    );
   }
 
   return (
-    <AnimatePresence>
-      {visible ? (
-        <>
-          {mode === "center" ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/35 p-4 backdrop-blur-[1px]"
-              onClick={closePopup}
-            >
+    <>
+      <AnimatePresence>
+        {visible ? (
+          <>
+            {mode === "center" ? (
               <motion.div
-                initial={{ opacity: 0, y: 20, scale: 0.96 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 bg-black/35 p-4 backdrop-blur-[1px]"
+                onClick={closePopup}
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 20, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 240, damping: 24 }}
+                  className="mx-auto mt-[7vh] w-fit"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <button
+                    onClick={closePopup}
+                    className="mb-2 ml-auto block rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-zinc-700 shadow"
+                  >
+                    Close
+                  </button>
+                  {renderSurvey()}
+                </motion.div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 24, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.96 }}
-                transition={{ type: "spring", stiffness: 240, damping: 24 }}
-                className="mx-auto mt-[7vh] w-fit"
-                onClick={(event) => event.stopPropagation()}
+                exit={{ opacity: 0, y: 12, scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                className="fixed bottom-5 right-5 z-50 w-[min(92vw,420px)]"
               >
                 <button
                   onClick={closePopup}
@@ -337,26 +428,11 @@ export default function SurveyRoutePopup() {
                 </button>
                 {renderSurvey()}
               </motion.div>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 24, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 260, damping: 24 }}
-              className="fixed bottom-5 right-5 z-50 w-[min(92vw,420px)]"
-            >
-              <button
-                onClick={closePopup}
-                className="mb-2 ml-auto block rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-zinc-700 shadow"
-              >
-                Close
-              </button>
-              {renderSurvey()}
-            </motion.div>
-          )}
-        </>
-      ) : null}
-    </AnimatePresence>
+            )}
+          </>
+        ) : null}
+      </AnimatePresence>
+      {renderDebugBadge()}
+    </>
   );
 }
