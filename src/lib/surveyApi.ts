@@ -18,6 +18,12 @@ export type TriggeredSurveyPayload = {
 
 type TriggerEventResponse = {
   survey: TriggeredSurveyPayload | null;
+  reasoning?: string[];
+  scored_candidates?: Array<{
+    survey_id: number;
+    score: number;
+    reasons: string[];
+  }>;
 };
 
 type Project = {
@@ -32,6 +38,12 @@ type TriggerSurveyEventInput = {
   page: string;
   userIdentifier: string;
   projectId?: number;
+  route?: string;
+  sessionId?: string;
+  timeOnPage?: number;
+  scrollDepth?: number;
+  cartValue?: number;
+  previousResponses?: number[];
 };
 
 type SubmitSurveyResponseInput = {
@@ -94,6 +106,12 @@ export async function triggerSurveyEvent({
   page,
   userIdentifier,
   projectId,
+  route,
+  sessionId,
+  timeOnPage,
+  scrollDepth,
+  cartValue,
+  previousResponses,
 }: TriggerSurveyEventInput): Promise<TriggeredSurveyPayload | null> {
   const resolvedProjectId = projectId ?? (await resolveProjectId());
 
@@ -108,6 +126,12 @@ export async function triggerSurveyEvent({
       user_identifier: userIdentifier,
       event_name: eventName,
       page,
+      route: route ?? page,
+      session_id: sessionId,
+      time_on_page: timeOnPage,
+      scroll_depth: scrollDepth,
+      cart_value: cartValue,
+      previous_responses: previousResponses,
     }),
   });
 
