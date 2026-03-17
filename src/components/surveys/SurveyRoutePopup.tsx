@@ -151,7 +151,7 @@ export default function SurveyRoutePopup() {
         }
 
         setBackendSurvey(survey);
-        const delayMs = Math.max(1200, 3200 - survey.priority * 350);
+        const delayMs = Math.max(300, 1000 - survey.priority * 120);
         setTimeout(() => {
           if (active) {
             setVisible(true);
