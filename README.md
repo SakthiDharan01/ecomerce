@@ -1,67 +1,36 @@
-# SurveySense Ecommerce Demo (Next.js)
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-Minimal deployable ecommerce demo that integrates with SurveySense and renders survey templates dynamically using questions returned by backend APIs.
+## Getting Started
 
-## Stack
+First, run the development server:
 
-- Next.js (App Router)
-- React + TypeScript
-- TailwindCSS
-
-## Key behavior
-
-- Product page with demo shopping actions
-- Actions send events to backend:
-   - `product_view`, `page_scroll`, `add_to_cart`, `checkout`
-- Survey appears only when backend returns one
-- Survey question text comes from backend payload
-- Response submits back to backend, then survey auto-hides
-- Template showcase can load backend survey list and preview each template style
-
-## Environment
-
-Create `.env.local` (or update `.env`) with:
-
-- `NEXT_PUBLIC_BACKEND_URL=https://YOUR_BACKEND_URL`
-- `NEXT_PUBLIC_PROJECT_ID=1`
-- `NEXT_PUBLIC_USER_IDENTIFIER=demo_user`
-
-Example is available in `.env.example`.
-
-## Local run
-
-1. Install deps: `npm install`
-2. Start dev server: `npm run dev`
-3. Open `http://localhost:3000`
-
-## Deploy
-
-Use Vercel (or any Next.js host) and set the same `NEXT_PUBLIC_*` env variables in project settings.
-
-## API contracts used
-
-### Event call
-
-`POST /events`
-
-```json
-{
-   "project_id": 1,
-   "user_identifier": "demo_user",
-   "event_name": "product_view"
-}
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-### Response call
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-`POST /responses`
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-```json
-{
-   "survey_id": 123,
-   "user_identifier": "demo_user",
-   "response_value": "YES",
-   "context_event": "nextjs_demo"
-}
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
